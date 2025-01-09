@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pedro José Riquelme Guerrero — Sistemas, Redes y Ciberseguridad</title>
+
+<!-- ══ SEO / REDES ══ EDITAR: descripción y URL cuando publiques el sitio ══ -->
+<meta name="description" content="Portfolio de Pedro José Riquelme Guerrero. Administración de sistemas, redes y ciberseguridad. Proyectos de infraestructura Debian, pentesting, criptografía y desarrollo web." />
+<meta name="author" content="Pedro José Riquelme Guerrero" />
+<meta property="og:title" content="Pedro José Riquelme Guerrero — Sistemas, Redes y Ciberseguridad" />
+<meta property="og:description" content="Infraestructura Debian, hacking ético, criptografía y desarrollo web." />
+<meta property="og:type" content="profile" />
+<meta name="theme-color" content="#0B1119" />
+
+<link rel="icon" href="assets/favicon.ico" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@100..125,400..900&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+
+<!-- ══════════ NAVEGACIÓN ══════════ -->
+<header class="nav" id="nav">
+  <div class="wrap nav__inner">
+    <a class="nav__brand" href="#top">
+      <span class="nav__mark">PJR</span>
+      <span class="nav__name">Pedro Riquelme</span>
+    </a>
+    <nav class="nav__links" aria-label="Secciones">
+      <a href="#perfil">Perfil</a>
+      <a href="#proyectos">Proyectos</a>
+      <a href="#formacion">Formación</a>
+      <a href="#contacto" class="nav__cta">Contacto</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ══════════ PORTADA ══════════ -->
+<section class="hero" id="top">
+  <div class="wrap">
+
+    <p class="eyebrow hero__eyebrow">
+      <span class="dot" aria-hidden="true"></span>
+      Cartagena, Murcia · Titulado y disponible para incorporación
+    </p>
+
+    <h1 class="hero__title">
+      Pedro José<br />Riquelme Guerrero
+    </h1>
+
+    <p class="hero__lead">
+      Monto, conecto y protejo infraestructura. Técnico Superior en Administración de
+      Sistemas Informáticos en Red y especializado en ciberseguridad: del cableado y el
+      servidor hasta el pentest y la aplicación que corre encima.
+    </p>
+
+    <div class="hero__actions">
+      <a class="btn btn--solid" href="#proyectos">Ver proyectos</a>
+      <a class="btn btn--ghost" href="https://www.linkedin.com/in/pedro-jos%C3%A9-riquelme-guerrero-a51b2a329/" target="_blank" rel="noopener">LinkedIn</a>
+      <a class="btn btn--ghost" href="https://github.com/Pedroriquelmee" target="_blank" rel="noopener">GitHub</a>
+    </div>
+
+    <!-- ══ ELEMENTO CENTRAL: LA RUTA DE UN PAQUETE ══
+         Cada parada abre un panel con sus tecnologías.
+         Para añadir/quitar tecnologías, edita los <li> del bloque .areas de abajo. -->
+    <div class="route-block" data-route>
+      <p class="eyebrow route-block__label">Por dónde pasa mi trabajo</p>
+
+      <div class="route">
+        <div class="route__rail" aria-hidden="true"><span class="route__pulse"></span></div>
+
+        <div class="node node--static">
+          <span class="node__box" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.5 2.4 2.5 13.6 0 16M12 4c-2.5 2.4-2.5 13.6 0 16"/></svg>
+          </span>
+          <span class="node__label">Internet</span>
+        </div>
+
+        <button class="node" type="button" data-area="seguridad" aria-controls="area-seguridad">
+          <span class="node__box" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M12 3l7 3v6c0 4.2-2.9 7.6-7 9-4.1-1.4-7-4.8-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+          </span>
+          <span class="node__label">Bastión</span>
+        </button>
+
+        <button class="node" type="button" data-area="redes" aria-controls="area-redes">
+          <span class="node__box" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="9" width="18" height="6" rx="1"/><path d="M7 9V5M12 9V5M17 9V5M7 15v4M12 15v4M17 15v4"/></svg>
+          </span>
+          <span class="node__label">Red</span>
+        </button>
+
+        <button class="node" type="button" data-area="sistemas" aria-controls="area-sistemas">
+          <span class="node__box" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="4" y="4" width="16" height="6" rx="1"/><rect x="4" y="14" width="16" height="6" rx="1"/><path d="M8 7h.01M8 17h.01"/></svg>
+          </span>
+          <span class="node__label">Servidores</span>
+        </button>
+
+        <button class="node" type="button" data-area="desarrollo" aria-controls="area-desarrollo">
+          <span class="node__box" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M9 8l-4 4 4 4M15 8l4 4-4 4"/></svg>
+          </span>
+          <span class="node__label">Aplicación</span>
+        </button>
+      </div>
+
+      <div class="areas">
+        <div class="area" id="area-seguridad" data-panel="seguridad">
+          <h2 class="area__title">Seguridad ofensiva y defensiva</h2>
+          <p class="area__desc">Auditar una máquina de principio a fin, documentar cada hallazgo y después cerrar la puerta por la que entré.</p>
+          <ul class="chips">
+            <li>Kali Linux</li><li>Nmap</li><li>Metasploit</li><li>Burp Suite</li>
+            <li>WPScan</li><li>wfuzz</li><li>iptables / nftables</li><li>Análisis forense</li>
+          </ul>
+        </div>
+
+        <div class="area" id="area-redes" data-panel="redes">
+          <h2 class="area__title">Redes y servicios</h2>
+          <p class="area__desc">Levantar la red entera sobre Debian: router, direccionamiento, resolución de nombres y transferencia de archivos, con redundancia.</p>
+          <ul class="chips">
+            <li>Routing y NAT</li><li>DHCP · relay · failover</li><li>DNS con BIND9</li>
+            <li>VLAN y segmentación</li><li>vsftpd</li><li>VPN</li><li>Zero Trust</li>
+          </ul>
+        </div>
+
+        <div class="area" id="area-sistemas" data-panel="sistemas">
+          <h2 class="area__title">Sistemas y virtualización</h2>
+          <p class="area__desc">Administración de servidores Linux y Windows, contenedores y laboratorios virtualizados donde probarlo todo antes de tocar producción.</p>
+          <ul class="chips">
+            <li>Debian · Ubuntu</li><li>Windows Server</li><li>Docker</li><li>Portainer</li>
+            <li>Nginx Proxy Manager</li><li>VirtualBox · UTM</li><li>Bash</li><li>PowerShell</li>
+          </ul>
+        </div>
+
+        <div class="area" id="area-desarrollo" data-panel="desarrollo">
+          <h2 class="area__title">Desarrollo</h2>
+          <p class="area__desc">Sitios y herramientas propias: desde webs estáticas para clientes reales hasta utilidades en Python con interfaz gráfica.</p>
+          <ul class="chips">
+            <li>HTML</li><li>CSS</li><li>JavaScript</li><li>Python</li>
+            <li>PHP</li><li>SQL</li><li>Streamlit</li><li>Git · GitHub</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ══════════ PERFIL ══════════ -->
+<section class="section" id="perfil">
+  <div class="wrap perfil">
+    <div class="perfil__media reveal">
+      <img src="assets/img/perfil.jpg" alt="Retrato de Pedro José Riquelme Guerrero" loading="lazy" />
+      <!-- EDITAR: sustituye la foto en assets/img/perfil.jpg. Vale cualquier proporción:
+           se recorta sola a formato retrato. Recomendado: 880×1100 px o más. -->
+    </div>
+
+    <div class="perfil__body reveal">
+      <p class="eyebrow">Perfil</p>
+      <h2 class="h2">Del hardware al pentest, sin saltarme pasos</h2>
+
+      <p>
+        Terminé Administración de Sistemas Informáticos en Red y, en mayo de 2026, el Curso
+        de Especialización en Ciberseguridad en Entornos de las Tecnologías de la Información
+        en el CIFP Carlos III. Ese recorrido es justo lo que me interesa: entender la
+        infraestructura por dentro antes de intentar romperla o defenderla.
+      </p>
+      <p>
+        Trabajo a gusto en la terminal y documentando lo que hago. La mayoría de mis
+        proyectos son laboratorios completos —máquinas Debian, Windows y Kali conectadas
+        entre sí— donde monto el servicio, lo ataco y escribo el informe. También hago
+        desarrollo web, sobre todo sitios estáticos para proyectos y asociaciones.
+      </p>
+      <p>
+        Fuera de lo técnico soy monitor voluntario en un grupo scout, que es donde he
+        aprendido a organizar equipos, planificar actividades y explicar las cosas para que
+        se entiendan.
+      </p>
+
+      <dl class="ficha">
+        <div><dt>Ubicación</dt><dd>Cartagena, Murcia</dd></div>
+        <div><dt>Idiomas</dt><dd>Español nativo · Inglés técnico</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ PROYECTOS ══════════
+     Para añadir un proyecto, copia un bloque <article class="proj"> entero
+     y cambia: categoría, título, descripción, chips y el href del enlace. -->
+<section class="section section--alt" id="proyectos">
+  <div class="wrap">
+    <header class="section__head reveal">
+      <p class="eyebrow">Proyectos</p>
+      <h2 class="h2">Trabajo publicado</h2>
+      <p class="section__sub">Cinco proyectos con código o documentación abierta. Cada enlace lleva al repositorio o a la publicación original.</p>
+    </header>
+
+    <div class="projs">
+
+      <article class="proj reveal">
+        <div class="proj__meta">
+          <span class="tag tag--sec">Ciberseguridad</span>
+          <span class="proj__year">2026</span>
+        </div>
+        <h3 class="proj__title">Manual de Herramientas de Hacking Ético</h3>
+        <p class="proj__desc">
+          Manual completo de herramientas de pentesting: para qué sirve cada una, sintaxis
+          real y en qué fase de la auditoría se usa. Recopilado a partir de siete prácticas
+          de laboratorio y publicado como documento de referencia.
+        </p>
+        <ul class="chips chips--sm">
+          <li>Kali Linux</li><li>Reconocimiento</li><li>Explotación</li><li>Escalada de privilegios</li>
+        </ul>
+        <a class="proj__link" href="https://www.linkedin.com/posts/pedro-jos%C3%A9-riquelme-guerrero-a51b2a329_manual-de-herramientas-hacking-%C3%A9tico-activity-7492187211745026048-3S1f" target="_blank" rel="noopener">
+          Leer en LinkedIn <span aria-hidden="true">→</span>
+        </a>
+      </article>
+
+      <article class="proj reveal">
+        <div class="proj__meta">
+          <span class="tag tag--net">Redes</span>
+          <span class="proj__year">2025</span>
+        </div>
+        <h3 class="proj__title">Infraestructura de red completa sobre Debian</h3>
+        <p class="proj__desc">
+          Proyecto final de Servicios en Red: router Debian con NAT y redirección de puertos
+          vía iptables, servidor DHCP con relay entre subredes y failover entre dos
+          servidores, DNS maestro y esclavo con BIND9 (zonas directas e inversas) y servidor
+          FTP con vsftpd. Todo documentado paso a paso.
+        </p>
+        <ul class="chips chips--sm">
+          <li>Debian</li><li>iptables</li><li>isc-dhcp-server</li><li>BIND9</li><li>vsftpd</li>
+        </ul>
+        <a class="proj__link" href="https://github.com/Pedroriquelmee/Proyecto-Final-SR" target="_blank" rel="noopener">
+          Ver en GitHub <span aria-hidden="true">→</span>
+        </a>
+      </article>
+
+      <article class="proj reveal">
+        <div class="proj__meta">
+          <span class="tag tag--sec">Criptografía</span>
+          <span class="proj__year">2025</span>
+        </div>
+        <h3 class="proj__title">Cifrado de archivos con Python</h3>
+        <p class="proj__desc">
+          Dos aplicaciones que cifran y descifran archivos de texto desde el navegador,
+          una construida con la librería <em>cryptography</em> y otra con
+          <em>PyCryptodome</em>, para comparar ambas implementaciones sobre el mismo caso de uso.
+        </p>
+        <ul class="chips chips--sm">
+          <li>Python</li><li>Streamlit</li><li>cryptography</li><li>PyCryptodome</li>
+        </ul>
+        <a class="proj__link" href="https://github.com/Pedroriquelmee/Proyecto-de-Criptografia" target="_blank" rel="noopener">
+          Ver en GitHub <span aria-hidden="true">→</span>
+        </a>
+      </article>
+
+      <article class="proj reveal">
+        <div class="proj__meta">
+          <span class="tag tag--dev">Desarrollo web</span>
+          <span class="proj__year">2025</span>
+        </div>
+        <h3 class="proj__title">Web del Grupo Scout Alba 601</h3>
+        <p class="proj__desc">
+          Sitio web del grupo scout con una sección propia para cada unidad —Manada de
+          Seonee, Tropa Amazonas y Esculta Mabuloa—, pensado para que familias nuevas
+          encuentren rápido la información de su tramo de edad.
+        </p>
+        <ul class="chips chips--sm">
+          <li>HTML</li><li>CSS</li><li>JavaScript</li><li>Diseño responsive</li>
+        </ul>
+        <a class="proj__link" href="https://github.com/Pedroriquelmee/Grupo-Scout-Alba-601" target="_blank" rel="noopener">
+          Ver en GitHub <span aria-hidden="true">→</span>
+        </a>
+      </article>
+
+      <!-- ══ PLANTILLA PARA UN PROYECTO NUEVO ══ Descomenta y rellena.
+      <article class="proj reveal">
+        <div class="proj__meta">
+          <span class="tag tag--sec">Categoría</span>
+          <span class="proj__year">Año</span>
+        </div>
+        <h3 class="proj__title">Título del proyecto</h3>
+        <p class="proj__desc">Dos o tres frases: qué monté, con qué y para qué sirve.</p>
+        <ul class="chips chips--sm"><li>Tecnología</li><li>Tecnología</li></ul>
+        <a class="proj__link" href="URL" target="_blank" rel="noopener">Ver en GitHub <span aria-hidden="true">→</span></a>
+      </article>
+      -->
+
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ FORMACIÓN ══════════ -->
+<section class="section" id="formacion">
+  <div class="wrap">
+    <header class="section__head reveal">
+      <p class="eyebrow">Trayectoria</p>
+      <h2 class="h2">Formación y experiencia</h2>
+    </header>
+
+    <ol class="timeline">
+      <li class="tl reveal">
+        <span class="tl__when">Finalizado</span>
+        <div class="tl__body">
+          <h3 class="tl__title">Curso de Especialización en Ciberseguridad en Entornos de las TI</h3>
+          <p class="tl__where">CIFP Carlos III</p>
+          <p class="tl__desc">Hacking ético, puesta en producción segura, respuesta ante incidentes y análisis forense informático.</p>
+        </div>
+      </li>
+
+      <li class="tl reveal">
+        <span class="tl__when">Finalizado</span><!-- EDITAR: pon el año, p. ej. 2025 -->
+        <div class="tl__body">
+          <h3 class="tl__title">Técnico Superior en Administración de Sistemas Informáticos en Red</h3>
+          <p class="tl__where">IES EL BOHIO</p><!-- EDITAR si cursaste ASIR en otro centro -->
+          <p class="tl__desc">Sistemas operativos, servicios de red, bases de datos, seguridad y hardware.</p>
+        </div>
+      </li>
+
+      <li class="tl reveal">
+        <span class="tl__when">En curso</span>
+        <div class="tl__body">
+          <h3 class="tl__title">Monitor voluntario</h3>
+          <p class="tl__where">Grupo Scout Alba 601</p>
+          <p class="tl__desc">Planificación de actividades y campamentos, trabajo en equipo y responsabilidad sobre grupos de menores.</p>
+        </div>
+      </li>
+    </ol>
+  </div>
+</section>
+
+<!-- ══════════ CONTACTO ══════════ -->
+<section class="section section--alt" id="contacto">
+  <div class="wrap contacto">
+    <div class="reveal">
+      <p class="eyebrow">Contacto</p>
+      <h2 class="h2">¿Hablamos?</h2>
+      <p class="contacto__sub">
+        Estoy abierto a ofertas junior en sistemas, redes o seguridad, y a proyectos
+        puntuales de web e infraestructura. Respondo en el mismo día.
+      </p>
+    </div>
+
+    <div class="contacto__grid reveal">
+      <a class="card-contact" href="mailto:pedrojoseriquelme34@gmail.com">
+        <span class="card-contact__label">Correo</span>
+        <span class="card-contact__value">pedrojoseriquelme34@gmail.com</span>
+      </a>
+      <a class="card-contact" href="tel:+34693760532">
+        <span class="card-contact__label">Teléfono</span>
+        <span class="card-contact__value">+34 693 76 05 32</span>
+      </a>
+      <a class="card-contact" href="https://www.linkedin.com/in/pedro-jos%C3%A9-riquelme-guerrero-a51b2a329/" target="_blank" rel="noopener">
+        <span class="card-contact__label">LinkedIn</span>
+        <span class="card-contact__value">Pedro José Riquelme Guerrero</span>
+      </a>
+      <a class="card-contact" href="https://github.com/Pedroriquelmee" target="_blank" rel="noopener">
+        <span class="card-contact__label">GitHub</span>
+        <span class="card-contact__value">@Pedroriquelmee</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer__inner">
+    <span>© <span id="year">2026</span> Pedro José Riquelme Guerrero</span>
+    <a href="#top">Volver arriba ↑</a>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>
