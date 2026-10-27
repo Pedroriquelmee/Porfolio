@@ -2,6 +2,7 @@
 import { sb, ok, sesionObligatoria, miPerfil, salir, llamarFuncion } from './supabase.js';
 import { el, aviso, dialogo, insigniaEstado, fechaHora, ESTADOS } from './dom.js';
 import { DOCUMENTOS, DOCUMENTOS_ADULTOS, PREGUNTAS_SANITARIAS, PREGUNTAS_ADULTOS } from './compartido/textos-legales.js';
+import { pdfDeUna, pdfDeVarias, guardarPdf, tieneFirma } from './pdf-completo.js';
 
 await sesionObligatoria();
 const perfil = await miPerfil();
@@ -22,6 +23,9 @@ const CORTO = { tarjeta_sanitaria: 'Tarjeta sanitaria', dni_nie: 'DNI/NIE', cart
 const vista = document.getElementById('vista');
 const filtro = { seccion: esCoord ? '' : String(perfil.seccion_id), texto: '', estado: '' };
 let refrescarLista = () => {};
+let firmadasVisibles = [];
+let generando = false;
+let actualizarBotonTodas = () => {};
 
 const PESTANAS = esCoord
   ? [['inscripciones', 'Inscripciones'], ['equipo', 'Equipo'], ['registro', 'Registro de accesos']]
@@ -78,20 +82,32 @@ async function vistaInscripciones() {
     id: 'buscar', type: 'search', placeholder: 'Nombre o apellidos', value: filtro.texto,
     oninput: (ev) => { filtro.texto = ev.target.value; refrescarLista(); },
   });
+  const botonTodas = el('button', {
+    type: 'button', class: 'boton boton--secundario', title: 'Las firmadas que se ven con los filtros, con sus documentos',
+    onclick: (ev) => descargarTodas(ev.currentTarget),
+  }, 'Todas en un PDF');
+  actualizarBotonTodas = () => {
+    if (generando) return;
+    botonTodas.textContent = firmadasVisibles.length ? `Todas en un PDF (${firmadasVisibles.length})` : 'Todas en un PDF';
+    botonTodas.disabled = firmadasVisibles.length === 0;
+  };
   const filtros = el('div', { class: 'filtros' },
     esCoord
       ? campoSelect('Sección', filtro.seccion, [['', 'Todas'], ...secciones.map((s) => [String(s.id), s.nombre])],
         (v) => { filtro.seccion = v; refrescarLista(); })
       : el('div', { class: 'campo' }, el('span', { class: 'etiqueta' }, 'Sección'), el('div', {}, perfil.secciones?.nombre)),
     el('div', { class: 'campo' }, el('label', { for: 'buscar' }, 'Buscar'), buscador),
-    el('div', { class: 'campo' }, el('button', { type: 'button', class: 'boton boton--secundario', onclick: listadoSanitario },
-      'Listado sanitario')));
+    el('div', { class: 'campo' }, el('div', { class: 'botones' },
+      el('button', { type: 'button', class: 'boton boton--secundario', onclick: listadoSanitario }, 'Listado sanitario'),
+      botonTodas)));
 
   refrescarLista = () => {
     const deSeccion = filas.filter((f) => !filtro.seccion || String(f.seccion_id) === filtro.seccion);
     const visibles = deSeccion.filter((f) =>
       (!filtro.estado || f.estado === filtro.estado) &&
       (!filtro.texto || sinAcentos(`${f.educandos.nombre} ${f.educandos.apellidos}`).includes(sinAcentos(filtro.texto))));
+    firmadasVisibles = visibles.filter(tieneFirma);
+    actualizarBotonTodas();
     contadores.replaceChildren(
       contador('', 'Total', deSeccion.length),
       ...Object.keys(ESTADOS).map((e) => contador(e, ESTADOS[e], deSeccion.filter((f) => f.estado === e).length)));
@@ -130,7 +146,10 @@ function tarjetaInscripcion(f) {
       insigniaEstado(f.estado)),
     f.estado === 'rechazada' && f.motivo_rechazo ? el('div', { class: 'pequeno suave' }, `Motivo: ${f.motivo_rechazo}`) : null,
     f.firmada_en ? el('div', { class: 'pequeno suave' }, `Firmada el ${fechaHora(f.firmada_en)}`) : null,
-    el('div', { class: 'chips' }, docs.map((d) => (subidos.has(d.tipo)
+    el('div', { class: 'chips' }, firmada ? el('button', {
+      type: 'button', class: 'chip chip--ok', title: 'Descargar solo la autorización firmada (original)',
+      onclick: (ev) => descargar(f.id, 'expediente', ev.currentTarget),
+    }, '✓ Autorización') : null, docs.map((d) => (subidos.has(d.tipo)
       ? el('button', {
         type: 'button', class: 'chip chip--ok', title: `Descargar: ${d.nombre}`,
         onclick: (ev) => descargar(f.id, d.tipo, ev.currentTarget),
@@ -140,8 +159,9 @@ function tarjetaInscripcion(f) {
       el('button', { type: 'button', class: 'boton boton--secundario boton--pequeno', onclick: () => verFicha(f) }, 'Ficha sanitaria'),
       firmada ? el('button', {
         type: 'button', class: 'boton boton--secundario boton--pequeno',
-        onclick: (ev) => descargar(f.id, 'expediente', ev.currentTarget),
-      }, 'PDF firmado') : null,
+        title: 'Autorización firmada y documentos en un solo PDF',
+        onclick: (ev) => descargarCompleto(f, ev.currentTarget),
+      }, 'PDF completo') : null,
       f.estado === 'firmada' ? el('button', { type: 'button', class: 'boton boton--pequeno', onclick: () => validar(f) }, 'Validar') : null,
       firmada ? el('button', { type: 'button', class: 'boton boton--peligro boton--pequeno', onclick: () => devolver(f) }, 'Devolver') : null),
     esCoord ? campoSelect('Mover a otra sección', String(f.seccion_id ?? ''),
@@ -158,6 +178,61 @@ async function descargar(inscripcionId, recurso, boton) {
     aviso(e.message, 'error');
   } finally {
     if (boton) boton.disabled = false;
+  }
+}
+
+// pdf-lib solo se carga la primera vez que se pide un PDF completo.
+let pdfLib = null;
+async function dependenciasPdf() {
+  pdfLib ??= await import('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm');
+  return {
+    PDFLib: pdfLib,
+    bajar: async (inscripcionId, recurso) => {
+      const { url } = await llamarFuncion('descargar', { inscripcion_id: inscripcionId, recurso });
+      const r = await fetch(url);
+      if (!r.ok) throw new Error(`no se pudo descargar (${r.status})`);
+      return new Uint8Array(await r.arrayBuffer());
+    },
+  };
+}
+
+async function descargarCompleto(f, boton) {
+  const texto = boton.textContent;
+  boton.disabled = true;
+  boton.textContent = 'Preparando…';
+  try {
+    const { bytes, nombre } = await pdfDeUna(await dependenciasPdf(), f, ronda.nombre);
+    guardarPdf(bytes, nombre);
+  } catch (e) {
+    aviso(e.message, 'error');
+  } finally {
+    boton.disabled = false;
+    boton.textContent = texto;
+  }
+}
+
+async function descargarTodas(boton) {
+  const filas = [...firmadasVisibles];
+  if (!filas.length || generando) return;
+  generando = true;
+  boton.disabled = true;
+  boton.textContent = 'Preparando…';
+  const titulo = filtro.seccion
+    ? secciones.find((s) => String(s.id) === filtro.seccion)?.nombre ?? ''
+    : 'Todas las secciones';
+  try {
+    const { bytes, nombre, fallidas } = await pdfDeVarias(await dependenciasPdf(), filas, {
+      ronda: ronda.nombre,
+      titulo,
+      progreso: (i, n) => { boton.textContent = `Preparando ${i} de ${n}…`; },
+    });
+    guardarPdf(bytes, nombre);
+    if (fallidas) aviso(`${fallidas} no se han podido incluir: están al final del índice.`, 'error', 8000);
+  } catch (e) {
+    aviso(e.message, 'error');
+  } finally {
+    generando = false;
+    actualizarBotonTodas();
   }
 }
 
@@ -227,7 +302,8 @@ async function moverSeccion(f, valor) {
   try {
     await sb.rpc('asignar_seccion', { p_inscripcion: f.id, p_seccion: Number(valor) }).then(ok);
     f.seccion_id = Number(valor);
-    f.secciones = { nombre: secciones.find((s) => s.id === Number(valor))?.nombre };
+    const s = secciones.find((x) => x.id === Number(valor));
+    f.secciones = { nombre: s?.nombre, adultos: s?.adultos };
     refrescarLista();
     aviso('Sección cambiada');
   } catch (e) {

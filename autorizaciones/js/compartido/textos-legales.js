@@ -228,8 +228,8 @@ export const PREGUNTAS_ADULTOS = [
 
 export const DOCUMENTOS_ADULTOS = [
   { tipo: 'tarjeta_sanitaria', nombre: 'Tarjeta sanitaria', obligatorio: true },
-  { tipo: 'cartilla_vacunacion', nombre: 'Cartilla de vacunación', obligatorio: true },
   { tipo: 'dni_nie', nombre: 'DNI en vigor', obligatorio: true },
+  { tipo: 'cartilla_vacunacion', nombre: 'Cartilla de vacunación', obligatorio: false },
 ];
 
 // Documentos que tocan según el tipo de socio/a.
