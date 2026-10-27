@@ -102,7 +102,7 @@ async function vistaInscripciones() {
       botonTodas)));
 
   refrescarLista = () => {
-    const deSeccion = filas.filter((f) => !filtro.seccion || String(f.seccion_id) === filtro.seccion);
+    const deSeccion = filas.filter((f) => !f.eliminada && (!filtro.seccion || String(f.seccion_id) === filtro.seccion));
     const visibles = deSeccion.filter((f) =>
       (!filtro.estado || f.estado === filtro.estado) &&
       (!filtro.texto || sinAcentos(`${f.educandos.nombre} ${f.educandos.apellidos}`).includes(sinAcentos(filtro.texto))));
@@ -166,7 +166,10 @@ function tarjetaInscripcion(f) {
       firmada ? el('button', { type: 'button', class: 'boton boton--peligro boton--pequeno', onclick: () => devolver(f) }, 'Devolver') : null),
     esCoord ? campoSelect('Mover a otra sección', String(f.seccion_id ?? ''),
       [['', '—'], ...secciones.map((s) => [String(s.id), s.nombre])],
-      (v) => moverSeccion(f, v)) : null));
+      (v) => moverSeccion(f, v)) : null,
+    esCoord ? el('div', { class: 'tarjeta__pie' }, el('button', {
+      type: 'button', class: 'boton boton--fantasma boton--pequeno boton--eliminar', onclick: () => eliminar(f),
+    }, 'Eliminar inscripción')) : null));
 }
 
 async function descargar(inscripcionId, recurso, boton) {
@@ -297,6 +300,33 @@ function devolver(f) {
   });
 }
 
+function eliminar(f) {
+  const nombre = `${f.educandos.nombre} ${f.educandos.apellidos}`;
+  const campo = el('input', { id: 'confirmar-eliminar', type: 'text', autocomplete: 'off', autocapitalize: 'characters', placeholder: 'ELIMINAR' });
+  const boton = el('button', { type: 'button', class: 'boton boton--peligro boton--bloque', disabled: true }, 'Eliminar para siempre');
+  const d = dialogo(`Eliminar · ${nombre}`,
+    el('p', {}, 'Se borrarán para siempre su autorización firmada, la ficha sanitaria, los datos de los tutores y los documentos subidos. No se puede deshacer.'),
+    tieneFirma(f) ? el('p', { class: 'pequeno suave' }, 'Si vas a necesitarla, descarga antes el PDF completo.') : null,
+    el('div', { class: 'campo' }, el('label', { for: 'confirmar-eliminar' }, 'Escribe ELIMINAR para confirmar'), campo),
+    boton);
+  campo.addEventListener('input', () => { boton.disabled = campo.value.trim().toUpperCase() !== 'ELIMINAR'; });
+  boton.addEventListener('click', async () => {
+    boton.disabled = true;
+    boton.textContent = 'Eliminando…';
+    try {
+      await llamarFuncion('eliminar', { inscripcion_id: f.id });
+      f.eliminada = true;
+      d.close();
+      refrescarLista();
+      aviso(`${nombre}: inscripción eliminada`);
+    } catch (e) {
+      aviso(e.message, 'error');
+      boton.textContent = 'Eliminar para siempre';
+      boton.disabled = false;
+    }
+  });
+}
+
 async function moverSeccion(f, valor) {
   if (!valor) return;
   try {
@@ -391,6 +421,7 @@ const ACCIONES = {
   devolver: 'Devolvió una inscripción',
   asignar_rol: 'Cambió un rol',
   asignar_seccion: 'Cambió de sección',
+  eliminar: 'Eliminó una inscripción',
 };
 
 async function vistaRegistro() {
@@ -406,9 +437,12 @@ async function vistaRegistro() {
     const ins = await sb.from('inscripciones').select('id, educandos(nombre, apellidos)').in('id', ids).then(ok);
     for (const i of ins) nombres[i.id] = `${i.educandos?.nombre ?? ''} ${i.educandos?.apellidos ?? ''}`.trim();
   }
+  // Las inscripciones eliminadas ya no están: su nombre se guardó al borrarlas.
+  const eliminadas = Object.fromEntries(filas.filter((f) => f.accion === 'eliminar' && f.detalle?.nombre)
+    .map((f) => [f.objeto_id, `${f.detalle.nombre} (eliminada)`]));
   const sobre = (f) => {
     if (f.objeto === 'perfil') return correo[f.objeto_id] ?? '';
-    const n = nombres[f.objeto_id] ?? '';
+    const n = nombres[f.objeto_id] ?? eliminadas[f.objeto_id] ?? '';
     return f.accion === 'descargar' ? `${n} (${CORTO[f.objeto] ?? 'PDF firmado'})` : n;
   };
   vista.replaceChildren(

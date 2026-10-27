@@ -167,6 +167,8 @@ details ul { padding-left: 18px; margin: 0; }
 .boton--secundario { background: var(--superficie); color: var(--texto); border-color: var(--linea); }
 .boton--fantasma { background: transparent; color: var(--acento); padding-inline: 8px; }
 .boton--peligro { background: var(--superficie); color: var(--peligro); border-color: var(--linea); }
+.boton--eliminar { color: var(--peligro); }
+.tarjeta__pie { display: flex; justify-content: flex-end; margin-top: 6px; }
 .boton--pequeno { min-height: 36px; padding: 6px 12px; font-size: 0.875rem; }
 .boton--bloque { width: 100%; }
 .botones { display: flex; gap: 10px; flex-wrap: wrap; }
