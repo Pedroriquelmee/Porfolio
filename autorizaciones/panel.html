@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- Política de seguridad: solo se ejecuta código de este sitio y de jsDelivr,
+       y solo se conecta con Supabase. Frena la mayoría de ataques XSS. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net; img-src 'self' data: blob:; style-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src blob:">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Panel del equipo · Grupo Scout Alba 601</title>
+  <link rel="stylesheet" href="css/estilos.css">
+  <script type="module" src="js/panel.js"></script>
+</head>
+<body>
+  <main class="app app--ancha">
+    <div class="barra">
+      <span class="barra__marca">Alba 601 · Panel</span>
+      <div class="barra__acciones">
+        <span id="quien" class="pequeno"></span>
+        <button id="salir" class="boton boton--fantasma boton--pequeno" type="button">Salir</button>
+      </div>
+    </div>
+    <div id="pestanas" class="pestanas" role="tablist"></div>
+    <div id="vista"><p class="cargando">Cargando…</p></div>
+  </main>
+</body>
+</html>

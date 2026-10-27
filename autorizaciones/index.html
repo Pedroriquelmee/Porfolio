@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- Política de seguridad: solo se ejecuta código de este sitio y de jsDelivr,
+       y solo se conecta con Supabase. Frena la mayoría de ataques XSS. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net; img-src 'self' data: blob:; style-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src blob:">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Acceso · Grupo Scout Alba 601</title>
+  <link rel="stylesheet" href="css/estilos.css">
+  <script type="module" src="js/acceso.js"></script>
+</head>
+<body>
+  <main class="app">
+    <div class="barra"><span class="barra__marca">Grupo Scout Alba 601</span></div>
+    <h1>Inscripciones y autorizaciones</h1>
+    <p class="suave">Entra con tu correo: te enviamos un enlace para acceder, sin contraseñas.</p>
+    <form id="acceso" class="tarjeta" novalidate>
+      <div class="campo">
+        <label for="email">Correo electrónico</label>
+        <input id="email" name="email" type="email" autocomplete="email" required>
+      </div>
+      <button class="boton boton--bloque" type="submit">Enviarme el enlace</button>
+    </form>
+    <div id="mensaje" aria-live="polite"></div>
+    <p class="pequeno suave">Los datos los trata la Asociación Grupo Scout Alba 601 únicamente para gestionar las actividades del grupo.</p>
+  </main>
+</body>
+</html>

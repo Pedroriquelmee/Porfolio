@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <!-- Política de seguridad: solo se ejecuta código de este sitio y de jsDelivr,
+       y solo se conecta con Supabase. Frena la mayoría de ataques XSS. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://cdn.jsdelivr.net; img-src 'self' data: blob:; style-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-src blob:">
+  <meta name="referrer" content="no-referrer">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Mis inscripciones · Grupo Scout Alba 601</title>
+  <link rel="stylesheet" href="css/estilos.css">
+  <script type="module" src="js/familia.js"></script>
+</head>
+<body>
+  <main class="app">
+    <div class="barra">
+      <span class="barra__marca">Grupo Scout Alba 601</span>
+      <div class="barra__acciones">
+        <a id="ir-panel" class="boton boton--fantasma boton--pequeno oculto" href="panel.html">Panel del equipo</a>
+        <button id="salir" class="boton boton--fantasma boton--pequeno" type="button">Salir</button>
+      </div>
+    </div>
+    <h1>Mis inscripciones</h1>
+    <p class="suave pequeno" id="quien"></p>
+    <div id="contenido"><p class="cargando">Cargando…</p></div>
+    <a class="boton boton--bloque" href="inscripcion.html">Nueva inscripción</a>
+    <p class="pequeno suave">Si eres scouter o del comité, inscríbete tú mismo/a eligiendo tu sección.</p>
+  </main>
+</body>
+</html>
