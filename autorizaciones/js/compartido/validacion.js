@@ -3,7 +3,7 @@
 // La usan el formulario (para avisar a la familia) y el servidor (que es
 // quien manda: el navegador se puede saltar, el servidor no).
 
-import { PREGUNTAS_SANITARIAS, PREGUNTAS_ADULTOS, IMAGEN_OPCIONES, documentosPara } from './textos-legales.js';
+import { PREGUNTAS_SANITARIAS, PREGUNTAS_ADULTOS, IMAGEN_OPCIONES, faltanDocumentos } from './textos-legales.js';
 
 // DNI y NIE: si tiene ese formato, la letra tiene que cuadrar con el
 // número. Pasaportes y otros documentos se aceptan tal cual.
@@ -93,10 +93,7 @@ export function faltanDatos(d) {
     if (sinElegir(a[o.campo])) f.push(`Cesión de imagen: ${o.corto}`);
   }
 
-  const subidos = new Set((d.documentos || []).map((x) => x.tipo));
-  for (const doc of documentosPara(adulto)) {
-    if (doc.obligatorio && !subidos.has(doc.tipo)) f.push(`Documento: ${doc.nombre}`);
-  }
+  for (const x of faltanDocumentos(adulto, adulto ? [] : d.tutores, d.documentos || [])) f.push(`Documento: ${x.texto}`);
   return f;
 }
 

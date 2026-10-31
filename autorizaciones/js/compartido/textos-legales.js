@@ -183,10 +183,14 @@ export const PREGUNTAS_SANITARIAS = [
   { campo: 'alergia_medicamentos', texto: '¿Es alérgico/a a algún tipo de medicamento?', cual: true },
 ];
 
+// Documentos. Los de "dosCaras" admiten un PDF (con las dos caras) o dos
+// fotos: si la de delante es una foto, hace falta también la de detrás.
+// La de detrás se guarda con el mismo tipo + "_reverso".
+// Los DNI de los tutores/as se añaden según cuántos haya (documentosPara).
 export const DOCUMENTOS = [
-  { tipo: 'tarjeta_sanitaria', nombre: 'Tarjeta sanitaria o seguro médico', obligatorio: true },
-  { tipo: 'dni_nie', nombre: 'DNI/NIE del participante (si tiene)', obligatorio: false },
-  { tipo: 'cartilla_vacunacion', nombre: 'Cartilla de vacunación', obligatorio: true },
+  { tipo: 'tarjeta_sanitaria', nombre: 'Tarjeta sanitaria o seguro médico', corto: 'Tarjeta sanitaria', obligatorio: true, dosCaras: true },
+  { tipo: 'cartilla_vacunacion', nombre: 'Cartilla de vacunación', corto: 'Vacunas', obligatorio: true },
+  { tipo: 'dni_nie', nombre: 'DNI/NIE del participante (si tiene)', corto: 'DNI/NIE', obligatorio: false, dosCaras: true },
 ];
 
 // =====================================================================
@@ -227,12 +231,88 @@ export const PREGUNTAS_ADULTOS = [
 ];
 
 export const DOCUMENTOS_ADULTOS = [
-  { tipo: 'tarjeta_sanitaria', nombre: 'Tarjeta sanitaria', obligatorio: true },
-  { tipo: 'dni_nie', nombre: 'DNI en vigor', obligatorio: true },
-  { tipo: 'cartilla_vacunacion', nombre: 'Cartilla de vacunación', obligatorio: false },
+  { tipo: 'tarjeta_sanitaria', nombre: 'Tarjeta sanitaria', corto: 'Tarjeta sanitaria', obligatorio: true, dosCaras: true },
+  { tipo: 'dni_nie', nombre: 'DNI en vigor', corto: 'DNI', obligatorio: true, dosCaras: true },
+  { tipo: 'cartilla_vacunacion', nombre: 'Cartilla de vacunación', corto: 'Vacunas', obligatorio: false },
 ];
 
-// Documentos que tocan según el tipo de socio/a.
-export function documentosPara(adulto) {
-  return adulto ? DOCUMENTOS_ADULTOS : DOCUMENTOS;
+const docTutor = (t, i) => ({
+  tipo: `dni_tutor${i + 1}`,
+  nombre: `DNI/NIE del tutor/a legal ${i + 1}`,
+  corto: `DNI tutor/a ${i + 1}`,
+  persona: `${t?.nombre ?? ''} ${t?.apellidos ?? ''}`.trim(),
+  obligatorio: true,
+  dosCaras: true,
+});
+
+/**
+ * Documentos que tocan según el tipo de socio/a. En menores, uno por cada
+ * tutor/a legal (DNI), detrás de la tarjeta sanitaria y la cartilla.
+ * Sin lista de tutores se cuenta uno.
+ */
+export function documentosPara(adulto, tutores) {
+  if (adulto) return DOCUMENTOS_ADULTOS;
+  const lista = (tutores?.length ? tutores : [{}]).slice(0, 2).map(docTutor);
+  return [DOCUMENTOS[0], DOCUMENTOS[1], ...lista, DOCUMENTOS[2]];
+}
+
+export const reversoDe = (tipo) => `${tipo}_reverso`;
+
+/** Nombre corto de cualquier tipo de archivo (chips del panel, registro…). */
+export function nombreCortoDocumento(tipo) {
+  const base = String(tipo).replace(/_reverso$/, '');
+  const tutor = /^dni_tutor(\d)$/.exec(base);
+  const corto = tutor ? `DNI tutor/a ${tutor[1]}` : [...DOCUMENTOS, ...DOCUMENTOS_ADULTOS].find((d) => d.tipo === base)?.corto ?? base;
+  return base === tipo ? corto : `${corto} (detrás)`;
+}
+
+// Todos los tipos que existen (tienen que coincidir con el enum tipo_documento).
+export const TIPOS_DOCUMENTO = [
+  'tarjeta_sanitaria', 'tarjeta_sanitaria_reverso', 'cartilla_vacunacion', 'dni_nie', 'dni_nie_reverso',
+  'dni_tutor1', 'dni_tutor1_reverso', 'dni_tutor2', 'dni_tutor2_reverso',
+];
+
+/**
+ * Cada archivo de una inscripción, en orden, con su nombre para mostrar:
+ * [{ doc, tipo, cara: 'delante' | 'detras' | null, nombre, corto, archivo }]
+ * "archivo" es el documento subido (o undefined si falta).
+ */
+export function huecosDocumentos(adulto, tutores, documentos = []) {
+  const subido = (tipo) => documentos.find((x) => x.tipo === tipo);
+  const huecos = [];
+  for (const doc of documentosPara(adulto, tutores)) {
+    const delante = subido(doc.tipo);
+    if (!doc.dosCaras) {
+      huecos.push({ doc, tipo: doc.tipo, cara: null, nombre: doc.nombre, corto: doc.corto, archivo: delante });
+      continue;
+    }
+    huecos.push({ doc, tipo: doc.tipo, cara: 'delante', nombre: `${doc.nombre} (delante)`, corto: doc.corto, archivo: delante });
+    const tipoDetras = reversoDe(doc.tipo);
+    huecos.push({
+      doc, tipo: tipoDetras, cara: 'detras', nombre: `${doc.nombre} (detrás)`, corto: `${doc.corto} (detrás)`,
+      archivo: subido(tipoDetras),
+    });
+  }
+  return huecos;
+}
+
+/**
+ * Lo que falta por subir: [{ tipo, texto }].
+ * - Un documento obligatorio sin nada subido.
+ * - Uno de dos caras con foto de delante pero sin la de detrás (si lo de
+ *   delante es un PDF, se entiende que ya lleva las dos caras).
+ */
+export function faltanDocumentos(adulto, tutores, documentos = []) {
+  const falta = [];
+  for (const doc of documentosPara(adulto, tutores)) {
+    const delante = documentos.find((x) => x.tipo === doc.tipo);
+    if (!delante) {
+      if (doc.obligatorio) falta.push({ tipo: doc.tipo, texto: doc.dosCaras ? `${doc.nombre} (delante y detrás, o un PDF)` : doc.nombre });
+      continue;
+    }
+    if (doc.dosCaras && delante.mime !== 'application/pdf' && !documentos.some((x) => x.tipo === reversoDe(doc.tipo))) {
+      falta.push({ tipo: reversoDe(doc.tipo), texto: `${doc.nombre}: falta la foto de detrás` });
+    }
+  }
+  return falta;
 }

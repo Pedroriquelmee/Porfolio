@@ -11,7 +11,7 @@
 // =====================================================================
 
 import {
-  ORGANIZACION, PREGUNTAS_SANITARIAS, PREGUNTAS_ADULTOS, documentosPara,
+  ORGANIZACION, PREGUNTAS_SANITARIAS, PREGUNTAS_ADULTOS, huecosDocumentos,
 } from './textos-legales.js';
 import { formatoTamano } from './archivos.js';
 
@@ -626,11 +626,13 @@ export async function generarExpediente(PDFLib, d, opciones = {}) {
     );
 
     seccion('Documentación aportada');
-    const docs = d.documentos || [];
-    for (const tipo of documentosPara(adulto)) {
-      const doc = docs.find((x) => x.tipo === tipo.tipo);
+    for (const h of huecosDocumentos(adulto, adulto ? [] : d.tutores, d.documentos || [])) {
+      const doc = h.archivo;
+      if (h.cara === 'detras' && !doc) continue; // con un PDF no hace falta la de detrás
       hueco(36);
-      page.drawText(limpiar(tipo.nombre), { x: MARGEN, y: y - 9, size: 9, font: fb, color: NEGRO });
+      const titulo = h.cara === 'delante' && !(d.documentos || []).some((x) => x.tipo === `${h.tipo}_reverso`)
+        ? h.doc.nombre : h.nombre;
+      page.drawText(limpiar(titulo), { x: MARGEN, y: y - 9, size: 9, font: fb, color: NEGRO });
       const info = limpiar(doc ? `${doc.nombre_archivo} · ${formatoTamano(doc.tamano)}` : 'No aportado');
       page.drawText(info, { x: MARGEN + ancho - f.widthOfTextAtSize(info, 8.2), y: y - 9, size: 8.2, font: f, color: GRIS });
       y -= 15;

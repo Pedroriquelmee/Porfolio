@@ -217,6 +217,11 @@ details ul { padding-left: 18px; margin: 0; }
 .doc__nombre { font-weight: 600; }
 .doc__estado { font-size: 0.85rem; color: var(--suave); overflow-wrap: anywhere; }
 .doc__estado--ok { color: var(--ok); }
+.doc__titulo { font-weight: 600; margin-bottom: 10px; }
+.doc__persona { display: block; font-weight: 400; font-size: 0.85rem; color: var(--suave); }
+.doc__cara { font-size: 0.85rem; font-weight: 600; }
+.doc + .doc { border-top: 1px solid var(--linea); margin-top: 12px; padding-top: 12px; }
+.doc__nota { font-size: 0.85rem; color: var(--suave); margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--linea); }
 .subir { position: relative; overflow: hidden; }
 .subir input { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0; }
 

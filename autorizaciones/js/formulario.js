@@ -134,9 +134,8 @@ export async function montarFormulario(raiz, opciones) {
   // Comprobaciones que no se pueden expresar con atributos HTML.
   const EXTRA = {
     1: () => (esAdulto() || est.tutores.length ? [] : [{ texto: 'Añade al menos un tutor/a' }]),
-    4: () => T.documentosPara(esAdulto())
-      .filter((d) => d.obligatorio && !est.documentos.some((x) => x.tipo === d.tipo))
-      .map((d) => ({ texto: `Falta subir: ${d.nombre}`, nodo: raiz.querySelector(`[data-doc="${d.tipo}"] label`) })),
+    4: () => T.faltanDocumentos(esAdulto(), tutoresActuales(), est.documentos)
+      .map((x) => ({ texto: `Falta subir: ${x.texto}`, nodo: raiz.querySelector(`[data-doc="${x.tipo}"] label`) })),
   };
 
   // ------------------------------------------------------------------
@@ -331,35 +330,62 @@ export async function montarFormulario(raiz, opciones) {
     ];
   }
 
+  // Los tutores/as que hay (cada uno sube su DNI).
+  const tutoresActuales = () => (esAdulto() ? [] : est.tutores);
+
   function pasoDocumentos() {
     return [
       el('p', { class: 'suave' }, 'Haz una foto o sube un PDF de cada documento. Valen PDF, JPG o PNG de hasta 5 MB.'),
-      T.documentosPara(esAdulto()).map((d) => tarjetaDocumento(d)),
+      el('p', { class: 'suave pequeno' }, 'DNI y tarjeta sanitaria: sube un PDF con las dos caras, o una foto de delante y otra de detrás.'),
+      T.documentosPara(esAdulto(), tutoresActuales()).map((d) => tarjetaDocumento(d)),
     ];
   }
 
   function tarjetaDocumento(d) {
-    const actual = est.documentos.find((x) => x.tipo === d.tipo);
-    const id = nuevoId();
+    const subido = (tipo) => est.documentos.find((x) => x.tipo === tipo);
+    const delante = subido(d.tipo);
+    const tipoDetras = T.reversoDe(d.tipo);
+    const detras = subido(tipoDetras);
+    const esPdf = delante?.mime === 'application/pdf';
+    const filas = [];
+    if (!d.dosCaras) {
+      filas.push(filaDocumento({ tipo: d.tipo, nombre: d.nombre }, delante, d.obligatorio ? 'Pendiente' : 'Opcional'));
+    } else {
+      filas.push(filaDocumento({ tipo: d.tipo, nombre: `${d.nombre} (delante)`, cara: 'Delante o PDF completo' },
+        delante, d.obligatorio ? 'Pendiente' : 'Opcional'));
+      // Con un PDF ya van las dos caras: la de detrás solo se pide con foto.
+      if (!esPdf || detras) {
+        filas.push(filaDocumento({ tipo: tipoDetras, nombre: `${d.nombre} (detrás)`, cara: 'Detrás' },
+          detras, delante ? 'Pendiente: haz también la foto de detrás' : (d.obligatorio ? 'Pendiente' : 'Opcional')));
+      } else {
+        filas.push(el('p', { class: 'doc__nota' }, 'PDF subido: no hace falta la foto de detrás.'));
+      }
+    }
+    return el('div', { class: 'tarjeta' },
+      el('div', { class: 'doc__titulo' }, d.nombre, d.persona ? el('span', { class: 'doc__persona' }, d.persona) : null),
+      filas);
+  }
+
+  function filaDocumento(hueco, actual, pendiente) {
     const input = el('input', {
-      id, type: 'file', accept: 'application/pdf,image/jpeg,image/png',
+      id: nuevoId(), type: 'file', accept: 'application/pdf,image/jpeg,image/png',
       onchange: (ev) => {
         const f = ev.target.files?.[0];
-        if (f) subir(d, f);
+        if (f) subir(hueco, f);
       },
     });
-    return el('div', { class: 'tarjeta', dataset: { doc: d.tipo } }, el('div', { class: 'doc' },
+    return el('div', { class: 'doc', dataset: { doc: hueco.tipo } },
       el('div', { class: 'doc__info' },
-        el('div', { class: 'doc__nombre' }, d.nombre),
+        hueco.cara ? el('div', { class: 'doc__cara' }, hueco.cara) : null,
         actual
           ? el('div', { class: 'doc__estado doc__estado--ok' }, `✓ ${actual.nombre_archivo} · ${formatoTamano(actual.tamano)}`)
-          : el('div', { class: 'doc__estado' }, d.obligatorio ? 'Pendiente' : 'Opcional')),
+          : el('div', { class: 'doc__estado' }, pendiente)),
       el('div', { class: 'botones' },
         el('label', { class: `boton boton--pequeno subir${actual ? ' boton--secundario' : ''}` },
           actual ? 'Cambiar' : 'Subir', input),
         actual ? el('button', {
-          type: 'button', class: 'boton boton--peligro boton--pequeno', onclick: () => quitar(d),
-        }, 'Quitar') : null)));
+          type: 'button', class: 'boton boton--peligro boton--pequeno', onclick: () => quitar(hueco),
+        }, 'Quitar') : null));
   }
 
   async function subir(d, archivo) {
@@ -450,15 +476,17 @@ export async function montarFormulario(raiz, opciones) {
 
   function resumen() {
     const e = est.educando;
-    const docs = T.documentosPara(esAdulto());
-    const subidos = docs.filter((d) => est.documentos.some((x) => x.tipo === d.tipo)).length;
+    const falta = T.faltanDocumentos(esAdulto(), tutoresActuales(), est.documentos);
+    const archivos = est.documentos.length;
     return el('div', { class: 'tarjeta' }, el('dl', {},
       dato('Socio/a', `${e.nombre || ''} ${e.apellidos || ''}`.trim()),
       dato('Sección', nombreSeccion()),
       esAdulto()
         ? dato('Contacto de emergencia', [est.contacto.nombre, est.contacto.telefono1].filter(Boolean).join(' · '))
         : dato('Tutores', est.tutores.map((t) => `${t.nombre || ''} ${t.apellidos || ''}`.trim()).join(' y ')),
-      dato('Documentos', `${subidos} de ${docs.length} subidos`)));
+      dato('Documentos', falta.length
+        ? `Falta${falta.length === 1 ? '' : 'n'} ${falta.length}`
+        : `Completos (${archivos} ${archivos === 1 ? 'archivo' : 'archivos'})`)));
   }
 
   async function firmar() {

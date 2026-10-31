@@ -1,7 +1,9 @@
 // Panel del equipo: coordinación (todo) y scouters (su sección).
 import { sb, ok, sesionObligatoria, miPerfil, salir, llamarFuncion } from './supabase.js';
 import { el, aviso, dialogo, insigniaEstado, fechaHora, ESTADOS } from './dom.js';
-import { DOCUMENTOS, DOCUMENTOS_ADULTOS, PREGUNTAS_SANITARIAS, PREGUNTAS_ADULTOS } from './compartido/textos-legales.js';
+import {
+  PREGUNTAS_SANITARIAS, PREGUNTAS_ADULTOS, TIPOS_DOCUMENTO, huecosDocumentos, nombreCortoDocumento,
+} from './compartido/textos-legales.js';
 import { pdfDeUna, pdfDeVarias, guardarPdf, tieneFirma } from './pdf-completo.js';
 
 await sesionObligatoria();
@@ -19,7 +21,7 @@ const [ronda, secciones] = await Promise.all([
   sb.from('secciones').select('id, nombre, adultos').order('orden').then(ok),
 ]);
 
-const CORTO = { tarjeta_sanitaria: 'Tarjeta sanitaria', dni_nie: 'DNI/NIE', cartilla_vacunacion: 'Vacunas' };
+const CORTO = Object.fromEntries(TIPOS_DOCUMENTO.map((t) => [t, nombreCortoDocumento(t)]));
 const vista = document.getElementById('vista');
 const filtro = { seccion: esCoord ? '' : String(perfil.seccion_id), texto: '', estado: '' };
 let refrescarLista = () => {};
@@ -128,7 +130,6 @@ function contador(estado, nombre, n) {
 
 function tarjetaInscripcion(f) {
   const e = f.educandos;
-  const subidos = new Set(f.documentos.map((d) => d.tipo));
   const tutor = f.tutores?.find((t) => t.orden === 1);
   const adulto = f.secciones?.adultos === true;
   const firmada = ['firmada', 'validada'].includes(f.estado);
@@ -138,7 +139,21 @@ function tarjetaInscripcion(f) {
     adulto && f.contacto_nombre ? `Contacto: ${f.contacto_nombre} · ${f.contacto_telefono1 ?? ''}` : null,
     !adulto && tutor ? `${tutor.nombre ?? ''} ${tutor.apellidos ?? ''} · ${tutor.movil ?? ''}` : null,
   ].filter(Boolean).join(' · ');
-  const docs = adulto ? DOCUMENTOS_ADULTOS : DOCUMENTOS;
+  // Un chip por archivo: verde si está (se descarga al pulsarlo), rojo si falta y es obligatorio.
+  const tutores = [...(f.tutores ?? [])].sort((x, y) => x.orden - y.orden);
+  const huecos = huecosDocumentos(adulto, tutores, f.documentos);
+  const conDetras = new Set(huecos.filter((h) => h.cara === 'detras' && h.archivo).map((h) => h.doc.tipo));
+  const chips = huecos.map((h) => {
+    if (h.archivo) {
+      const texto = h.cara === 'delante' && conDetras.has(h.doc.tipo) ? `${h.corto} (delante)` : h.corto;
+      return el('button', {
+        type: 'button', class: 'chip chip--ok', title: `Descargar: ${h.nombre}`,
+        onclick: (ev) => descargar(f.id, h.tipo, ev.currentTarget),
+      }, `✓ ${texto}`);
+    }
+    if (h.cara === 'detras') return null; // con un PDF no hace falta
+    return el('span', { class: `chip${h.doc.obligatorio ? ' chip--falta' : ''}`, title: h.doc.persona || h.nombre }, `✗ ${h.corto}`);
+  });
 
   return el('li', { class: 'tarjeta' }, el('div', { class: 'item' },
     el('div', { class: 'tarjeta__cabecera' },
@@ -149,12 +164,7 @@ function tarjetaInscripcion(f) {
     el('div', { class: 'chips' }, firmada ? el('button', {
       type: 'button', class: 'chip chip--ok', title: 'Descargar solo la autorización firmada (original)',
       onclick: (ev) => descargar(f.id, 'expediente', ev.currentTarget),
-    }, '✓ Autorización') : null, docs.map((d) => (subidos.has(d.tipo)
-      ? el('button', {
-        type: 'button', class: 'chip chip--ok', title: `Descargar: ${d.nombre}`,
-        onclick: (ev) => descargar(f.id, d.tipo, ev.currentTarget),
-      }, `✓ ${CORTO[d.tipo]}`)
-      : el('span', { class: `chip${d.obligatorio ? ' chip--falta' : ''}` }, `✗ ${CORTO[d.tipo]}`)))),
+    }, '✓ Autorización') : null, chips),
     el('div', { class: 'botones' },
       el('button', { type: 'button', class: 'boton boton--secundario boton--pequeno', onclick: () => verFicha(f) }, 'Ficha sanitaria'),
       firmada ? el('button', {

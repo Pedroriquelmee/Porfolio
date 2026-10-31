@@ -7,16 +7,11 @@
 // No depende de Supabase: recibe { PDFLib, bajar } para poder probarlo aparte.
 //   bajar(inscripcionId, recurso) → Uint8Array   (recurso: 'expediente' | tipo de documento)
 import { tipoReal } from './compartido/archivos.js';
-import { documentosPara } from './compartido/textos-legales.js';
+import { huecosDocumentos } from './compartido/textos-legales.js';
 
 const A4 = [595.28, 841.89];
 const MARGEN = 40;
 const LADO_MAXIMO = 2000; // px: se lee bien un DNI y el PDF no se dispara de peso
-const TITULOS = {
-  tarjeta_sanitaria: 'Tarjeta sanitaria',
-  dni_nie: 'DNI/NIE',
-  cartilla_vacunacion: 'Cartilla de vacunación',
-};
 
 // Letras que no se descomponen en letra + tilde (nombres extranjeros).
 const OTRAS_LETRAS = { 'Ł': 'L', 'ł': 'l', 'Đ': 'D', 'đ': 'd', 'Ħ': 'H', 'ħ': 'h', 'ı': 'i', 'Ŧ': 'T', 'ŧ': 't' };
@@ -103,13 +98,14 @@ async function preparar(PDFLib) {
 }
 
 async function anadirInscripcion(c, f, bajar) {
-  const subidos = new Set((f.documentos ?? []).map((d) => d.tipo));
-  const docs = documentosPara(f.secciones?.adultos === true).filter((d) => subidos.has(d.tipo));
+  const adulto = f.secciones?.adultos === true;
+  const tutores = [...(f.tutores ?? [])].sort((x, y) => x.orden - y.orden);
+  const huecos = huecosDocumentos(adulto, tutores, f.documentos ?? []).filter((h) => h.archivo);
   // Se piden todos a la vez. Si falla un documento se deja una hoja avisando;
   // si falla la autorización firmada, la inscripción entera no se incluye.
   const [firmado, ...archivos] = await Promise.all([
     bajar(f.id, 'expediente'),
-    ...docs.map((d) => bajar(f.id, d.tipo).catch((e) => (e instanceof Error ? e : new Error(String(e))))),
+    ...huecos.map((h) => bajar(f.id, h.tipo).catch((e) => (e instanceof Error ? e : new Error(String(e))))),
   ]);
 
   let origen;
@@ -120,21 +116,42 @@ async function anadirInscripcion(c, f, bajar) {
   }
   for (const p of await c.doc.copyPages(origen, origen.getPageIndices())) c.doc.addPage(p);
 
-  for (const [i, d] of docs.entries()) {
-    const titulo = `${TITULOS[d.tipo] ?? d.nombre} · ${nombreDe(f)}`;
-    const archivo = archivos[i];
-    if (archivo instanceof Error) {
-      paginaAviso(c, titulo, `No se ha podido descargar este documento: ${archivo.message}`);
+  // Cada documento con sus caras. Si delante y detrás son fotos, van en la
+  // misma hoja (como una fotocopia del DNI por las dos caras).
+  for (let i = 0; i < huecos.length; i++) {
+    const h = huecos[i];
+    const siguiente = huecos[i + 1];
+    const fotos = (a) => !(a instanceof Error) && ['image/jpeg', 'image/png'].includes(tipoReal(a));
+    if (h.cara === 'delante' && siguiente?.doc === h.doc && siguiente.cara === 'detras'
+      && fotos(archivos[i]) && fotos(archivos[i + 1])) {
+      const titulo = `${h.doc.corto} · ${nombreDe(f)}`;
+      try {
+        await paginaImagenes(c, [
+          { bytes: archivos[i], tipo: tipoReal(archivos[i]), etiqueta: 'Delante' },
+          { bytes: archivos[i + 1], tipo: tipoReal(archivos[i + 1]), etiqueta: 'Detrás' },
+        ], titulo);
+      } catch {
+        paginaAviso(c, titulo, 'No se han podido incluir estas fotos. Descárgalas aparte desde el panel.');
+      }
+      i++;
       continue;
     }
-    const tipo = tipoReal(archivo);
-    try {
-      if (tipo === 'application/pdf') await anadirPdf(c, archivo, titulo);
-      else if (tipo === 'image/jpeg' || tipo === 'image/png') await paginaImagen(c, archivo, tipo, titulo);
-      else paginaAviso(c, titulo, 'Este archivo no es un PDF ni una imagen JPG/PNG.');
-    } catch {
-      paginaAviso(c, titulo, 'No se ha podido incluir este archivo. Descárgalo aparte desde el panel.');
-    }
+    await anadirArchivo(c, archivos[i], `${h.cara === 'detras' ? h.corto : h.doc.corto} · ${nombreDe(f)}`);
+  }
+}
+
+async function anadirArchivo(c, archivo, titulo) {
+  if (archivo instanceof Error) {
+    paginaAviso(c, titulo, `No se ha podido descargar este documento: ${archivo.message}`);
+    return;
+  }
+  const tipo = tipoReal(archivo);
+  try {
+    if (tipo === 'application/pdf') await anadirPdf(c, archivo, titulo);
+    else if (tipo === 'image/jpeg' || tipo === 'image/png') await paginaImagenes(c, [{ bytes: archivo, tipo }], titulo);
+    else paginaAviso(c, titulo, 'Este archivo no es un PDF ni una imagen JPG/PNG.');
+  } catch {
+    paginaAviso(c, titulo, 'No se ha podido incluir este archivo. Descárgalo aparte desde el panel.');
   }
 }
 
@@ -149,18 +166,35 @@ async function anadirPdf(c, bytes, titulo) {
   for (const p of await c.doc.copyPages(origen, origen.getPageIndices())) c.doc.addPage(p);
 }
 
-async function paginaImagen(c, bytes, tipo, titulo) {
-  const n = await normalizarImagen(bytes, tipo);
-  const img = n.tipo === 'image/png' ? await c.doc.embedPng(n.bytes) : await c.doc.embedJpg(n.bytes);
+// Una o varias fotos en una hoja A4, una debajo de otra.
+async function paginaImagenes(c, fotos, titulo) {
+  const imagenes = [];
+  for (const f of fotos) {
+    const n = await normalizarImagen(f.bytes, f.tipo);
+    imagenes.push({
+      img: n.tipo === 'image/png' ? await c.doc.embedPng(n.bytes) : await c.doc.embedJpg(n.bytes),
+      etiqueta: f.etiqueta,
+    });
+  }
   const page = c.doc.addPage(A4);
   const [W, H] = A4;
   cabecera(c, page, titulo);
+  const HUECO = 18;
+  const ETIQUETA = imagenes.some((x) => x.etiqueta) ? 16 : 0;
   const maxW = W - 2 * MARGEN;
-  const maxH = H - 2 * MARGEN - 30;
-  const k = Math.min(maxW / img.width, maxH / img.height);
-  const w = img.width * k;
-  const h = img.height * k;
-  page.drawImage(img, { x: (W - w) / 2, y: H - MARGEN - 30 - h, width: w, height: h });
+  const total = H - 2 * MARGEN - 30;
+  const alto = (total - HUECO * (imagenes.length - 1)) / imagenes.length - ETIQUETA;
+  let y = H - MARGEN - 30;
+  for (const { img, etiqueta } of imagenes) {
+    if (etiqueta) {
+      page.drawText(c.texto(etiqueta), { x: MARGEN, y: y - 10, size: 9, font: c.negrita, color: c.color.gris });
+    }
+    const k = Math.min(maxW / img.width, alto / img.height);
+    const w = img.width * k;
+    const h = img.height * k;
+    page.drawImage(img, { x: (W - w) / 2, y: y - ETIQUETA - h, width: w, height: h });
+    y -= ETIQUETA + alto + HUECO;
+  }
 }
 
 // Las fotos del móvil: se enderezan según su EXIF, se reducen y pasan a JPG.
